@@ -1,0 +1,23 @@
+{
+	"name": "movinate-backend",
+	"private": true,
+	"version": "0.1.0",
+	"description": "Socket and database server for Movinate",
+	"type": "module",
+	"main": "src/index.js",
+	"scripts": {
+		"lint": "eslint .",
+		"dev": "nodemon ./src/index.js"
+	},
+	"dependencies": {
+		"express": "^5.1.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.33.0",
+		"eslint": "^9.33.0",
+		"globals": "^16.3.0",
+		"nodemon": "^3.1.10"
+	},
+	"author": "Alex Loren",
+	"license": "MIT"
+}
