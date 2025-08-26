@@ -1,5 +1,5 @@
 import crypto from "crypto"
-import { socketMessages } from "./socketMessages"
+import { socketMessages } from "./socketMessages.js"
 
 /**
  * @typedef {Object} User
