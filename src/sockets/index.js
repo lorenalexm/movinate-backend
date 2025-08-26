@@ -1,4 +1,5 @@
 import crypto from "crypto"
+import { socketMessages } from "./socketMessages"
 
 /**
  * @typedef {Object} User
@@ -67,21 +68,30 @@ function getPlexInformationForRoom(id) {
 }
 
 /**
+ * Checks to see if the parameter is a plain object type, and not null.
+ * @param {Object} parameter An object to be checked.
+ * @returns Whether or not the parameter is a plain object.
+ */
+function isObject(parameter) {
+	return parameter != null && Object.getPrototypeOf(parameter) == Object.prototype
+}
+
+/**
  * Informs a room of the current {@link User} count. Gives a negative value if room does not exist.
  * @param {Server} io The Socket.io server to broadcast to.
  * @param {String} id The Id of an active room.
  */
 function emitRoomUserCount(io, id) {
 	let count = rooms[id]?.size || -1
-	io.to(id).emit("userCount", { count })
+	io.to(id).emit(socketMessages.userCount, { count })
 }
 
 /**
  * Creates the socket connection and registers all message handlers.
  * @param {Server} io The Socket.io server to create the connection against.
  */
-export function create(io) {
-	io.on("connection", (socket) => {
+function create(io) {
+	io.on(socketMessages.connection, (socket) => {
 		console.log(`Socket ${socket.id} - Received connection.`)
 		disconnect(socket)
 		createRoom(socket)
@@ -97,7 +107,7 @@ export function create(io) {
  * @param {Socket} socket The socket to register this message with.
  */
 function disconnect(socket) {
-	socket.on("disconnect", () => {
+	socket.on(socketMessages.disconnect, () => {
 		console.log(`Socket ${socket.id} - Received disconnection.`)
 		let user = users[socket.id]
 		if (user) {
@@ -122,7 +132,7 @@ function disconnect(socket) {
  * @param {Socket} socket The socket to register this message with.
  */
 function createRoom(socket) {
-	socket.on("createRoom", (callback) => {
+	socket.on(socketMessages.createRoom, (callback) => {
 		let id = generateRoomId()
 		rooms[id] = new Set()
 		rooms[id].add(socket.id)
@@ -146,12 +156,12 @@ function createRoom(socket) {
  * @param {Socket} socket The socket to register this message with.
  */
 function joinRoom(socket) {
-	socket.on("joinRoom", (id, callback) => {
+	socket.on(socketMessages.joinRoom, (id, callback) => {
 		if (rooms[id]) {
 			rooms[id].add(socket.id)
 
 			users[socket.id] = createUser(id)
-			let { server, library } = getPlexInformationForRoom()
+			let { server, library } = getPlexInformationForRoom(id)
 			users[socket.id].server = server
 			users[socket.id].library = library
 			socket.join(id)
@@ -179,15 +189,23 @@ function joinRoom(socket) {
  * @param {Socket} socket The socket to register this message with.
  */
 function setUserServer(socket) {
-	socket.on("setUserServer", (server, callback) => {
+	socket.on(socketMessages.setUserServer, (server, callback) => {
 		let user = users[socket.id]
 		if (user) {
 			console.log(`Socket ${socket.id} - Updated the Plex.tv server.`)
-			user.server = server
-			callback({
-				success: true,
-				message: "Updated the server for the user."
-			})
+			if (isObject(server)) {
+				user.server = server
+				callback({
+					success: true,
+					message: "Updated the server for the user."
+				})
+			} else {
+				callback({
+					success: false,
+					message: "Failed to update the Plex.tv server. An invalid server object was received."
+				})
+			}
+			
 		} else {
 			console.error(`Socket ${socket.id} - Failed to update the Plex.tv server. Socket not found in users object.`)
 			callback({
@@ -204,14 +222,22 @@ function setUserServer(socket) {
  * @param {Socket} socket The socket to register this message with. 
  */
 function setUserLibrary(socket) {
-	socket.on("setUserLibrary", (library, callback) => {
+	socket.on(socketMessages.setUserLibrary, (library, callback) => {
 		let user = users[socket.id]
 		if (user) {
-			user.library = library
-			callback({
-				success: true,
-				message: "Updated the library for the user."
-			})
+			if (isObject(library)) {
+				user.library = library
+				callback({
+					success: true,
+					message: "Updated the library for the user."
+				})
+			} else {
+				callback({
+					success: false,
+					message: "Failed to update the Plex.tv library. An invalid library object was received."
+				})
+			}
+			
 		} else {
 			console.error(`Socket ${socket.id} - Failed to update the Plex.tv library. Socket not found in users object.`)
 			callback({
@@ -221,3 +247,5 @@ function setUserLibrary(socket) {
 		}
 	})
 }
+
+export { create, createRoom }
