@@ -1,6 +1,6 @@
-import js from "@eslint/js";
-import globals from "globals";
-import { defineConfig } from "eslint/config";
+import js from "@eslint/js"
+import globals from "globals"
+import { defineConfig } from "eslint/config"
 
 export default defineConfig([
 	{
@@ -15,6 +15,11 @@ export default defineConfig([
 			"no-mixed-spaces-and-tabs": "error",
 			curly: ["error", "all"],
 			quotes: ["error", "double"]
+		},
+		env: {
+			"node": true,
+			"es6": true,
+			"jest": true
 		}
 	},
-]);
+])
