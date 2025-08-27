@@ -1,7 +1,8 @@
 /**
  * An object containing all of the messages sent to and from the socket server.
+ * @readonly
  */
-export let socketMessages = {
+export let socketMessages = Object.freeze({
 	/** @property {string} connection The default Socket.io connection message. */
 	connection: "connection",
 	/** @property {string} connect Emitted when a new client connects. */
@@ -18,4 +19,4 @@ export let socketMessages = {
 	setUserServer: "setUserServer",
 	/** @property {string} setUserLibrary Emitted to update the Plex.tv library of a user. They must be in a room for success. */
 	setUserLibrary: "setUserLibrary"
-}
+})
