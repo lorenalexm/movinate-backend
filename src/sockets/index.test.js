@@ -128,6 +128,39 @@ describe("Testing the Socket.io behaviour", () => {
 		})
 	})
 
+	test("Successfully sends the user count of a room to a requesting user", (done) => {
+		let secondClient
+		let fromManualRequest = false
+		let timesCalled = 0
+
+		client.on(socketMessages.userCount, (data) => {
+			timesCalled++
+			if (fromManualRequest) {
+				expect(data.count).toEqual(2)
+				// First client is already connected, will be off by 1.
+				expect(timesCalled).toEqual(2)
+				secondClient.close()
+				done()
+			}
+		})
+
+		client.emit(socketMessages.createRoom, (data) => {
+			expect(data).toHaveProperty("id")
+			let roomId = data.id
+			client.emit(socketMessages.upvote, 123)
+
+			secondClient = new Client(`http://localhost:${port}`)
+			secondClient.on(socketMessages.connect, () => {
+				secondClient.emit(socketMessages.joinRoom, roomId, (data) => {
+					expect(data).toHaveProperty("success")
+					expect(data.success).toBe(true)
+					fromManualRequest = true
+					secondClient.emit(socketMessages.requestUserCount, roomId)
+				})
+			})
+		})
+	})
+
 	/**
 	 * Attempts to fail {@link socketMessages.setUserLibrary} and {@link socketMessages.setUserServer} messages.
 	 * Passes in a variety of objects that should be invalid on the server.

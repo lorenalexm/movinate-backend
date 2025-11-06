@@ -118,6 +118,7 @@ function create(io) {
 		joinRoom(socket)
 		setUserServer(socket)
 		setUserLibrary(socket)
+		requestUserCount(socket)
 		upvote(socket)
 	})
 }
@@ -270,23 +271,35 @@ function setUserLibrary(socket) {
 }
 
 /**
+ * Responds to a {@link User} request to retreive the user count of a room.
+ * @param {Server} socket The socket to register this message with.
+ */
+function requestUserCount(socket) {
+	socket.on(socketMessages.requestUserCount, (id, callback) => {
+		if (rooms[id]) {
+			emitRoomUserCount(socket.server, id)
+		}
+	})
+}
+
+/**
  * Adds a media id to a {@link User}'s upvoted {@link Set}.
  * Will then preform a consensus check to see if every other {@link User} has upvoted the same item.
  * @param {Socket} socket The socket to register this message with. 
  */
 function upvote(socket) {
-	socket.on(socketMessages.upvote, (mediaId, callback) => {
+	socket.on(socketMessages.upvote, (id, callback) => {
 		let user = users[socket.id]
 		if (user) {
-			if (!user.upvoted.has(mediaId)) {
-				user.upvoted.add(mediaId)
+			if (!user.upvoted.has(id)) {
+				user.upvoted.add(id)
 				if (typeof callback == "function") {
 					callback({ 
 						success: true,
 						message: "Upvoted successfully."
 					})
 				}
-				checkConsensus(user.roomId, mediaId, socket.server)
+				checkConsensus(user.roomId, id, socket.server)
 			}
 		} else {
 			console.error(`Socket ${socket.id} - Failed to upvote media item. Socket not found in users object.`)

@@ -11,6 +11,8 @@ export let socketMessages = Object.freeze({
 	disconnect: "disconnect",
 	/** @property {string} userCount Emitted every time a user joins or leaves a room. Returns a negative number if emitted to an invalid room. */
 	userCount: "userCount",
+	/** @property {string} requestUserCount Received from a user to get the current user count of a room. */
+	requestUserCount: "requestUserCount",
 	/** @property {string} createRoom Emitted when a user creates a new room. */
 	createRoom: "createRoom",
 	/** @property {string} joinRoom Emitted when a user wants to join an existing room. Will fail if room doesn't exist. */
