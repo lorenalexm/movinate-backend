@@ -18,5 +18,9 @@ export let socketMessages = Object.freeze({
 	/** @property {string} setUserServer Emitted to update the Plex.tv server of a user. They must be in a room for success. */
 	setUserServer: "setUserServer",
 	/** @property {string} setUserLibrary Emitted to update the Plex.tv library of a user. They must be in a room for success. */
-	setUserLibrary: "setUserLibrary"
+	setUserLibrary: "setUserLibrary",
+	/** @property {string} upvote Emitted when a media item is upvoted by a user. */
+	upvote: "upvote",
+	/** @property {string} consensusReached Emitted when all users in a room have upvoted the same media. */
+	consensusReached: "consensusReached"
 })

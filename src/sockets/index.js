@@ -3,9 +3,10 @@ import { socketMessages } from "./socketMessages.js"
 
 /**
  * @typedef {Object} User
- * @property {String} roomId The Socket.io room
- * @property {String} server - The Plex.tv server address.
- * @property {String} library The library whos media will be voted upon
+ * @property {String} roomId The Socket.io room.
+ * @property {String} server The Plex.tv server address.
+ * @property {String} library The library whos media will be voted upon.
+ * @property {Set} upvoted Contains all of the items a user has upvoted.
  */
 
 /**
@@ -48,7 +49,8 @@ function createUser(roomId) {
 	return {
 		roomId,
 		server: "",
-		library: ""
+		library: "",
+		upvoted: new Set()
 	}
 }
 
@@ -87,6 +89,24 @@ function emitRoomUserCount(io, id) {
 }
 
 /**
+ * Checks if every {@link User} in a room has upvoted the same media item.
+ * @param {String} roomId The Id of the {@link User} room.
+ * @param {Object} mediaId The media Id that the {@link User} upvoted.
+ * @param {Server} io The Socket.io server to broadcast to.
+ */
+function checkConsensus(roomId, mediaId, io) {
+	if (!rooms[roomId]) {
+		return
+	}
+
+	let usersInRoom = Array.from(rooms[roomId])
+	let reached = usersInRoom.every(socketId => users[socketId].upvoted.has(mediaId))
+	if (reached) {
+		io.to(roomId).emit(socketMessages.consensusReached, { id: mediaId })
+	}
+}
+
+/**
  * Creates the socket connection and registers all message handlers.
  * @param {Server} io The Socket.io server to create the connection against.
  */
@@ -98,6 +118,7 @@ function create(io) {
 		joinRoom(socket)
 		setUserServer(socket)
 		setUserLibrary(socket)
+		upvote(socket)
 	})
 }
 
@@ -240,6 +261,35 @@ function setUserLibrary(socket) {
 			
 		} else {
 			console.error(`Socket ${socket.id} - Failed to update the Plex.tv library. Socket not found in users object.`)
+			callback({
+				success: false,
+				message: `Unable to find user with the Id: ${socket.id}`
+			})
+		}
+	})
+}
+
+/**
+ * Adds a media id to a {@link User}'s upvoted {@link Set}.
+ * Will then preform a consensus check to see if every other {@link User} has upvoted the same item.
+ * @param {Socket} socket The socket to register this message with. 
+ */
+function upvote(socket) {
+	socket.on(socketMessages.upvote, (mediaId, callback) => {
+		let user = users[socket.id]
+		if (user) {
+			if (!user.upvoted.has(mediaId)) {
+				user.upvoted.add(mediaId)
+				if (typeof callback == "function") {
+					callback({ 
+						success: true,
+						message: "Upvoted successfully."
+					})
+				}
+				checkConsensus(user.roomId, mediaId, socket.server)
+			}
+		} else {
+			console.error(`Socket ${socket.id} - Failed to upvote media item. Socket not found in users object.`)
 			callback({
 				success: false,
 				message: `Unable to find user with the Id: ${socket.id}`

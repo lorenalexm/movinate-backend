@@ -103,6 +103,31 @@ describe("Testing the Socket.io behaviour", () => {
 		})
 	})
 
+	test("Successfully reaches consensus when multiple users upvote the same media item", (done) => {
+		let secondClient
+
+		client.on(socketMessages.consensusReached, (data) => {
+			expect(data.id).toEqual(123)
+			secondClient.close()
+			done()
+		})
+
+		client.emit(socketMessages.createRoom, (data) => {
+			expect(data).toHaveProperty("id")
+			let roomId = data.id
+			client.emit(socketMessages.upvote, 123)
+
+			secondClient = new Client(`http://localhost:${port}`)
+			secondClient.on(socketMessages.connect, () => {
+				secondClient.emit(socketMessages.joinRoom, roomId, (data) => {
+					expect(data).toHaveProperty("success")
+					expect(data.success).toBe(true)
+					secondClient.emit(socketMessages.upvote, 123)
+				})
+			})
+		})
+	})
+
 	/**
 	 * Attempts to fail {@link socketMessages.setUserLibrary} and {@link socketMessages.setUserServer} messages.
 	 * Passes in a variety of objects that should be invalid on the server.
