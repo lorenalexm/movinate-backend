@@ -90,6 +90,7 @@ function emitRoomUserCount(io, id) {
 
 /**
  * Checks if every {@link User} in a room has upvoted the same media item.
+ * If more than one {@link User} is in the room, will emit a consensus reached message.
  * @param {String} roomId The Id of the {@link User} room.
  * @param {Object} mediaId The media Id that the {@link User} upvoted.
  * @param {Server} io The Socket.io server to broadcast to.
@@ -100,6 +101,10 @@ function checkConsensus(roomId, mediaId, io) {
 	}
 
 	let usersInRoom = Array.from(rooms[roomId])
+	if (usersInRoom.length == 1) {
+		return
+	}
+	
 	let reached = usersInRoom.every(socketId => users[socketId].upvoted.has(mediaId))
 	if (reached) {
 		io.to(roomId).emit(socketMessages.consensusReached, { id: mediaId })
