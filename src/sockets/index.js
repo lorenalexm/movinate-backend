@@ -229,6 +229,9 @@ function setUserServer(socket) {
 			} else {
 				try {
 					let parsed = JSON.parse(server)
+					if (!parsed.clientIdentifier) {
+						throw new Error("Invalid server object!")
+					}
 					user.server = parsed
 					console.log(`Socket ${socket.id} - Updated the Plex.tv server.`)
 					callback({
@@ -273,6 +276,9 @@ function setUserLibrary(socket) {
 			} else {
 				try {
 					let parsed = JSON.parse(library)
+					if (!parsed.uuid) {
+						throw new Error("Invalid library object!")
+					}
 					user.library = parsed
 					console.log(`Socket ${socket.id} - Updated the Plex.tv library.`)
 					callback({
