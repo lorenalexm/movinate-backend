@@ -219,18 +219,29 @@ function setUserServer(socket) {
 	socket.on(socketMessages.setUserServer, (server, callback) => {
 		let user = users[socket.id]
 		if (user) {
-			console.log(`Socket ${socket.id} - Updated the Plex.tv server.`)
 			if (isObject(server)) {
 				user.server = server
+				console.log(`Socket ${socket.id} - Updated the Plex.tv server.`)
 				callback({
 					success: true,
 					message: "Updated the server for the user."
 				})
 			} else {
-				callback({
-					success: false,
-					message: "Failed to update the Plex.tv server. An invalid server object was received."
-				})
+				try {
+					let parsed = JSON.parse(server)
+					user.server = parsed
+					console.log(`Socket ${socket.id} - Updated the Plex.tv server.`)
+					callback({
+						success: true,
+						message: "Updated the server for the user."
+					})
+				} catch {
+					console.log(`Socket ${socket.id} - Failed to update the Plex.tv server. An invalid server object was received.`)
+					callback({
+						success: false,
+						message: "Failed to update the Plex.tv server. An invalid server object was received."
+					})
+				}
 			}
 			
 		} else {
@@ -254,15 +265,27 @@ function setUserLibrary(socket) {
 		if (user) {
 			if (isObject(library)) {
 				user.library = library
+				console.log(`Socket ${socket.id} - Updated the Plex.tv library.`)
 				callback({
 					success: true,
 					message: "Updated the library for the user."
 				})
 			} else {
-				callback({
-					success: false,
-					message: "Failed to update the Plex.tv library. An invalid library object was received."
-				})
+				try {
+					let parsed = JSON.parse(library)
+					user.library = parsed
+					console.log(`Socket ${socket.id} - Updated the Plex.tv library.`)
+					callback({
+						success: true,
+						message: "Updated the library for the user."
+					})
+				} catch {
+					console.log(`Socket ${socket.id} - Failed to update the Plex.tv library. An invalid library object was received.`)
+					callback({
+						success: false,
+						message: "Failed to update the Plex.tv library. An invalid library object was received."
+					})
+				}
 			}
 			
 		} else {
